@@ -164,6 +164,7 @@ const ContactDetail = ({ contact, onBack }) => {
                       type="file"
                       multiple
                       accept="image/*"
+                      capture="environment"
                       onChange={handlePhotoUpload}
                       className="w-full"
                     />
