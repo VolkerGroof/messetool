@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { db } from '../firebase'
 import { doc, updateDoc } from 'firebase/firestore'
 import useWhisperRecording from '../hooks/useWhisperRecording'
+import { compressImage } from '../utils/compressImage'
 
 const ContactDetail = ({ contact, onBack }) => {
   const [formData, setFormData] = useState(contact)
@@ -25,8 +26,9 @@ const ContactDetail = ({ contact, onBack }) => {
     const files = Array.from(e.target.files)
     for (const file of files) {
       const reader = new FileReader()
-      reader.onload = (event) => {
-        setNewPhotos((prev) => [...prev, event.target.result])
+      reader.onload = async (event) => {
+        const compressed = await compressImage(event.target.result)
+        setNewPhotos((prev) => [...prev, compressed])
       }
       reader.readAsDataURL(file)
     }

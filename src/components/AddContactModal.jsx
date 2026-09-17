@@ -3,6 +3,7 @@ import { db } from '../firebase'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import useWhisperRecording from '../hooks/useWhisperRecording'
 import { parseTranscriptWithClaude } from '../utils/parseTranscript'
+import { compressImage } from '../utils/compressImage'
 
 const AddContactModal = ({ onClose }) => {
   const [step, setStep] = useState('choice')
@@ -73,8 +74,9 @@ const AddContactModal = ({ onClose }) => {
     const files = Array.from(e.target.files)
     for (const file of files) {
       const reader = new FileReader()
-      reader.onload = (event) => {
-        setPhotos((prev) => [...prev, event.target.result])
+      reader.onload = async (event) => {
+        const compressed = await compressImage(event.target.result)
+        setPhotos((prev) => [...prev, compressed])
       }
       reader.readAsDataURL(file)
     }
