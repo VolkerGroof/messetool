@@ -6,8 +6,15 @@ export default async function handler(req, res) {
   const { transcript } = req.body
   const apiKey = process.env.VITE_ANTHROPIC_API_KEY
 
-  if (!apiKey || !transcript) {
-    return res.status(400).json({ error: 'Missing API key or transcript' })
+  console.log('API Key present:', !!apiKey)
+  console.log('Transcript length:', transcript?.length)
+
+  if (!apiKey) {
+    return res.status(400).json({ error: 'Missing VITE_ANTHROPIC_API_KEY environment variable' })
+  }
+
+  if (!transcript) {
+    return res.status(400).json({ error: 'Missing transcript' })
   }
 
   const prompt = `You are an expert at extracting contact information from natural speech at trade fairs.
