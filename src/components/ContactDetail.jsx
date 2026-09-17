@@ -84,7 +84,7 @@ const ContactDetail = ({ contact, onBack }) => {
     } catch (error) {
       console.error('Error updating contact:', error)
       setUploading(false)
-      alert('Error updating contact. Please try again.')
+      alert(`Error updating contact: ${error.message}`)
     }
   }
 
