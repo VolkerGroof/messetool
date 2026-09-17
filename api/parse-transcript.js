@@ -60,15 +60,20 @@ Rules:
 
     if (!response.ok) {
       const error = await response.json()
+      console.error('Claude API error:', error)
       return res.status(response.status).json({ error: 'Claude API error', details: error })
     }
 
     const data = await response.json()
-    if (!data.content || !data.content[0]) {
-      return res.status(500).json({ error: 'Invalid Claude response' })
+    console.log('Claude response:', JSON.stringify(data))
+
+    if (!data.content || !data.content[0] || !data.content[0].text) {
+      console.error('Invalid Claude response structure:', data)
+      return res.status(500).json({ error: 'Invalid Claude response', details: data })
     }
 
     const content = data.content[0].text
+    console.log('Parsed content:', content)
     const parsed = JSON.parse(content)
     return res.status(200).json(parsed)
   } catch (error) {
