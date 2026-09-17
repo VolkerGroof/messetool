@@ -100,7 +100,7 @@ const AddContactModal = ({ onClose }) => {
     } catch (error) {
       console.error('Error adding contact:', error)
       setUploading(false)
-      alert('Error saving contact.')
+      alert(`Error saving contact: ${error.message}`)
     }
   }
 
@@ -203,7 +203,7 @@ const AddContactModal = ({ onClose }) => {
 
           <div className="border-t pt-4">
             <h3 className="font-semibold mb-3">Photos</h3>
-            <input type="file" multiple accept="image/*" onChange={handlePhotoUpload} className="mb-3" />
+            <input type="file" multiple accept="image/*" capture="environment" onChange={handlePhotoUpload} className="mb-3" />
             {photos.length > 0 && (
               <div className="grid grid-cols-3 gap-2 mb-4">
                 {photos.map((photo, idx) => (
