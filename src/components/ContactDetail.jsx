@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { db } from '../firebase'
 import { doc, updateDoc } from 'firebase/firestore'
-import useVoiceInput from '../hooks/useVoiceInput'
+import useWhisperRecording from '../hooks/useWhisperRecording'
 
 const ContactDetail = ({ contact, onBack }) => {
   const [formData, setFormData] = useState(contact)
@@ -10,8 +10,11 @@ const ContactDetail = ({ contact, onBack }) => {
   const [newPhotos, setNewPhotos] = useState([])
   const [uploading, setUploading] = useState(false)
   const [voiceFieldTarget, setVoiceFieldTarget] = useState(null)
-  const { isListening, transcript, startListening, stopListening } =
-    useVoiceInput()
+  const [voiceStep, setVoiceStep] = useState(null)
+  const [voiceTranscript, setVoiceTranscript] = useState('')
+  const [voiceTranscribing, setVoiceTranscribing] = useState(false)
+  const { isRecording, transcript, startRecording, stopRecording } =
+    useWhisperRecording()
 
   const handleFormChange = (e) => {
     const { name, value } = e.target
@@ -31,11 +34,19 @@ const ContactDetail = ({ contact, onBack }) => {
 
   const handleVoiceInputField = (field) => {
     setVoiceFieldTarget(field)
-    startListening()
+    setVoiceStep('recording')
+    startRecording()
   }
 
   const handleVoiceStop = async () => {
-    stopListening()
+    setVoiceTranscribing(true)
+    stopRecording()
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    setVoiceTranscribing(false)
+    setVoiceStep('review')
+  }
+
+  const handleVoiceApply = () => {
     if (transcript && voiceFieldTarget) {
       setFormData((prev) => ({
         ...prev,
@@ -43,6 +54,14 @@ const ContactDetail = ({ contact, onBack }) => {
       }))
     }
     setVoiceFieldTarget(null)
+    setVoiceStep(null)
+    setVoiceTranscript('')
+  }
+
+  const handleVoiceCancel = () => {
+    setVoiceFieldTarget(null)
+    setVoiceStep(null)
+    setVoiceTranscript('')
   }
 
   const handleSave = async () => {
@@ -498,16 +517,48 @@ const ContactDetail = ({ contact, onBack }) => {
         </div>
       </main>
 
-      {voiceFieldTarget && (
-        <div className="fixed bottom-4 right-4 bg-blue-600 text-white p-4 rounded-lg shadow-lg">
-          <p className="mb-2 font-semibold">Recording...</p>
-          {transcript && <p className="text-sm mb-3">{transcript}</p>}
-          <button
-            onClick={handleVoiceStop}
-            className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-sm font-semibold"
-          >
-            Stop & Apply
-          </button>
+      {voiceFieldTarget && voiceStep === 'recording' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold mb-6">Recording...</h2>
+            <div className="bg-red-100 rounded-lg p-8 text-center mb-4">
+              <div className="text-6xl mb-4 animate-pulse">🎤</div>
+              <p className="text-gray-600 font-semibold">Recording {voiceFieldTarget}</p>
+            </div>
+            <button onClick={handleVoiceStop} className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded font-semibold">
+              Stop Recording
+            </button>
+          </div>
+        </div>
+      )}
+
+      {voiceFieldTarget && voiceStep === 'review' && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 my-8">
+            <h2 className="text-2xl font-bold mb-4">Review</h2>
+
+            {voiceTranscribing ? (
+              <div className="bg-blue-100 p-4 rounded mb-4 text-center">
+                <p className="text-blue-700 font-semibold">⏳ Processing audio...</p>
+              </div>
+            ) : (
+              <div className="bg-gray-50 rounded-lg p-4 mb-4 max-h-48 overflow-y-auto border-2 border-gray-200">
+                <p className="text-gray-700 whitespace-pre-wrap">{transcript || 'No transcript received'}</p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <button onClick={() => { setVoiceStep('recording'); startRecording() }} className="w-full bg-gray-500 hover:bg-gray-600 text-white py-2 rounded font-semibold">
+                🔄 Re-record
+              </button>
+              <button onClick={handleVoiceApply} disabled={voiceTranscribing || !transcript} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold disabled:bg-gray-400">
+                ✓ Apply to {voiceFieldTarget}
+              </button>
+              <button onClick={handleVoiceCancel} className="w-full bg-gray-400 hover:bg-gray-500 text-white py-2 rounded">
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
